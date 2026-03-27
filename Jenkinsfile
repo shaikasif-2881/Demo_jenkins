@@ -16,6 +16,7 @@ pipeline{
                 sh "npm run build"
              }  
             }
+    }
         post{
                 always{
                     echo "========always========"
@@ -27,5 +28,4 @@ pipeline{
                     echo "========A execution failed========"
                 }
             }
-    }
 }
