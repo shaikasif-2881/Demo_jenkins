@@ -5,6 +5,7 @@ pipeline{
             steps{
                 git url: "https://github.com/shaikasif-2881/Demo_Jenkins.git"
             }
+            }
         stage("Install Dependencies"){
              steps{
                 sh "npm install"
@@ -26,6 +27,5 @@ pipeline{
                     echo "========A execution failed========"
                 }
             }
-        }
     }
 }
