@@ -1,6 +1,6 @@
 FROM node:18 as build
 WOKDIR /app
-COPY package*.Jason ./
+COPY package*.json ./
 RUN npm install 
 COPY . .
 RUN npm run build
