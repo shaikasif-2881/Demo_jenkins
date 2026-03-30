@@ -7,78 +7,58 @@ pipeline {
     }
 
     stages {
-
         stage("Checkout") {
             steps {
                 git branch: "main", url: "https://github.com/shaikasif-2881/Demo_jenkins.git"
             }
         }
 
-        stage("Install Dependencies") {
+        stage("Install & Build") {
             steps {
-                sh '''
-                cd my-app
-                npm install
-                '''
-            }
-        }
-
-        stage("Build Application") {
-            steps {
-                sh '''
-                cd my-app
-                npm run build
-                '''
+                // Combine into one directory context to ensure Node 20+ is used
+                dir('my-app') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
             }
         }
 
         stage("Build Docker Image") {
             steps {
-                sh '''
-                cd my-app
-                docker build -t $DOCKER_IMAGE .
-                '''
+                // Ensure Docker build happens INSIDE the my-app folder where Dockerfile lives
+                dir('my-app') {
+                    sh "docker build -t ${DOCKER_IMAGE} ."
+                }
             }
         }
 
         stage("Login to DockerHub") {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'docker-creds',
-                    usernameVariable: 'asifuserdocker',
+                    credentialsId: 'docker-creds', // Make sure this ID exists in Jenkins
+                    usernameVariable: 'DOCKER_USER', // This is the VARIABLE name, not your username
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
+                    // Use the variables defined above
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                 }
             }
         }
 
-        stage("Push Docker Image") {
+        stage("Push & Deploy") {
             steps {
-                sh 'docker push $DOCKER_IMAGE'
-            }
-        }
-
-        stage("Deploy Container") {
-            steps {
-                sh '''
-                docker stop $CONTAINER_NAME || true
-                docker rm $CONTAINER_NAME || true
-                docker run -d -p 80:80 --name $CONTAINER_NAME $DOCKER_IMAGE
-                '''
+                sh "docker push ${DOCKER_IMAGE}"
+                sh """
+                docker stop ${CONTAINER_NAME} || true
+                docker rm ${CONTAINER_NAME} || true
+                docker run -d -p 80:80 --name ${CONTAINER_NAME} ${DOCKER_IMAGE}
+                """
             }
         }
     }
 
     post {
-        always {
-            echo "======== ALWAYS ========"
-        }
-        success {
-            echo "✅ Pipeline executed successfully"
-        }
-        failure {
-            echo "❌ Pipeline execution failed"
-        }
+        success { echo "✅ Pipeline executed successfully" }
+        failure { echo "❌ Pipeline execution failed" }
     }
 }
