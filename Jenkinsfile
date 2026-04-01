@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 pipeline {
     agent any
 
@@ -87,6 +88,38 @@ pipeline {
         }
         failure {
             echo "FAILED ❌"
+=======
+pipeline{
+    agent any
+    stages{
+        stage("Checkout"){
+            steps{
+                checkout scm
+            }
+
+        }
+        stage("Install Dependencies"){
+             steps{
+                sh "npm install"
+             }  
+            }
+        stage("Build"){
+             steps{
+                sh "npm run build"
+             }  
+            }
+        post{
+                always{
+                    echo "========always========"
+                }
+                success{
+                    echo "========A executed successfully========"
+                }
+                failure{
+                    echo "========A execution failed========"
+                }
+            }
+>>>>>>> 178391e054c87ab302789d3068ba6a50084d2a39
         }
     }
 }
