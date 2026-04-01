@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'abdullah' }
+    agent any
 
     environment {
         DOCKER_IMAGE = "asifuserdocker/demo-jenkins"
