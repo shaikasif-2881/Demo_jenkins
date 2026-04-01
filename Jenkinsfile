@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 pipeline {
     agent any
 
@@ -119,7 +119,7 @@ pipeline{
                     echo "========A execution failed========"
                 }
             }
->>>>>>> 178391e054c87ab302789d3068ba6a50084d2a39
+
         }
     }
 }
