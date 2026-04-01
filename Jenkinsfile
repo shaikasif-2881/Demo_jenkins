@@ -1,64 +1,88 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = "asifuserdocker/demo-jenkins"
-        CONTAINER_NAME = "demo-container"
-    }
-
     stages {
+
         stage("Checkout") {
             steps {
                 checkout scm
             }
         }
 
-        stage("Install & Build") {
+        stage("Prepare") {
             steps {
-                // Combine into one directory context to ensure Node 20+ is used
-                dir('my-app') {
-                    sh 'npm install'
-                    sh 'npm run build'
-                }
+                sh '''
+                echo "Preparing environment..."
+                chmod +x script.sh
+                '''
             }
         }
 
-        stage("Build Docker Image") {
+        stage("Run Script") {
             steps {
-                // Ensure Docker build happens INSIDE the my-app folder where Dockerfile lives
-                dir('my-app') {
-                    sh "docker build -t ${DOCKER_IMAGE} ."
-                }
+                sh '''
+                echo "Running main script..."
+                ./script.sh
+                '''
             }
         }
 
-        stage("Login to DockerHub") {
+        stage("Test") {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-creds', // Make sure this ID exists in Jenkins
-                    usernameVariable: 'DOCKER_USER', // This is the VARIABLE name, not your username
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    // Use the variables defined above
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                }
+                sh '''
+                echo "Running basic tests..."
+
+                # Example test condition
+                if [ -f script.sh ]; then
+                    echo "Test Passed "
+                else
+                    echo "Test Failed "
+                    exit 1
+                fi
+                '''
             }
         }
 
-        stage("Push & Deploy") {
+        stage("Deploy") {
+            when {
+                anyOf {
+                    branch 'dev'
+                    branch 'main'
+                }
+            }
             steps {
-                sh "docker push ${DOCKER_IMAGE}"
-                sh """
-                docker stop ${CONTAINER_NAME} || true
-                docker rm ${CONTAINER_NAME} || true
-                docker run -d -p 80:80 --name ${CONTAINER_NAME} ${DOCKER_IMAGE}
-                """
+                script {
+                    if (env.BRANCH_NAME == 'dev') {
+                        echo "🚀 Deploying to STAGING"
+                        sh '''
+                        mkdir -p /tmp/staging
+                        cp script.sh /tmp/staging/
+                        echo "Deployed to STAGING"
+                        '''
+                    }
+
+                    if (env.BRANCH_NAME == 'main') {
+                        echo "🚀 Deploying to PRODUCTION"
+                        sh '''
+                        mkdir -p /tmp/production
+                        cp script.sh /tmp/production/
+                        echo "Deployed to PRODUCTION"
+                        '''
+                    }
+                }
             }
         }
     }
 
     post {
-        success { echo "✅ Pipeline executed successfully" }
-        failure { echo "❌ Pipeline execution failed" }
+        always {
+            echo "Pipeline completed"
+        }
+        success {
+            echo "SUCCESS ✅"
+        }
+        failure {
+            echo "FAILED ❌"
+        }
     }
 }
