@@ -21,7 +21,7 @@ pipeline {
         stage("Run Script") {
             steps {
                 sh '''
-                echo "Running main script..."
+                echo "Running script..."
                 ./script.sh
                 '''
             }
@@ -30,13 +30,12 @@ pipeline {
         stage("Test") {
             steps {
                 sh '''
-                echo "Running basic tests..."
+                echo "Running tests..."
 
-                # Example test condition
                 if [ -f script.sh ]; then
-                    echo "Test Passed "
+                    echo "Test Passed ✅"
                 else
-                    echo "Test Failed "
+                    echo "Test Failed ❌"
                     exit 1
                 fi
                 '''
@@ -52,6 +51,7 @@ pipeline {
             }
             steps {
                 script {
+
                     if (env.BRANCH_NAME == 'dev') {
                         echo "🚀 Deploying to STAGING"
                         sh '''
@@ -68,6 +68,10 @@ pipeline {
                         cp script.sh /tmp/production/
                         echo "Deployed to PRODUCTION"
                         '''
+                    }
+
+                    if (env.BRANCH_NAME == 'test') {
+                        echo "🧪 Test branch - No deployment"
                     }
                 }
             }
