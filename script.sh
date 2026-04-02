@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# This is a basic script file
 echo "🚀 Application starting..."
 
 echo "Running some logic..."
